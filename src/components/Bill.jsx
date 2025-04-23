@@ -1,8 +1,10 @@
-import React from "react";
+import React, { useEffect, useMemo } from "react";
 import { View, Text, Image, ScrollView, StyleSheet } from "react-native";
+import { generateAddressString } from "../utils/apiGHN";
+import GenQRPayMent from "./GenQRPayMent";
 
 const Bill = ({ billData }) => {
-  console.log("đây là bill dât",billData);
+  console.log("đây là bill dât", billData);
   // Helper function to format currency in VND
   const formatCurrency = (amount) => {
     if (amount === null || amount === undefined) return "0 đ";
@@ -37,6 +39,7 @@ const Bill = ({ billData }) => {
 
   // Map new data structure to existing component props
   const {
+    key,
     billCode,
     recipientName,
     recipientPhoneNumber,
@@ -46,17 +49,37 @@ const Bill = ({ billData }) => {
     shippingFee,
     vouchers,
     itemName,
+    isShipping,
   } = billData;
 
   // Format address with null checks
-  const address = detailAddressShipping
-    ? `${detailAddressShipping.specificAddress || ""}, ${
-        detailAddressShipping.wardId || ""
-      }, ${detailAddressShipping.districtId || ""}, ${
-        detailAddressShipping.provinceId || ""
-      }`.trim() || "Không có thông tin địa chỉ"
-    : "Không có thông tin địa chỉ";
+  const [address, setAddress] = React.useState("Đang tải...");
 
+  useEffect(() => {
+    let isCancelled = false; // Flag để hủy tác vụ bất đồng bộ
+
+    const fetchAddress = async () => {
+      if (isShipping) {
+        const add = await generateAddressString(
+          detailAddressShipping.provinceId,
+          detailAddressShipping.districtId,
+          detailAddressShipping.wardId.toString(),
+          detailAddressShipping.specificAddress
+        );
+        if (!isCancelled) {
+          setAddress(add); // Chỉ cập nhật nếu tác vụ chưa bị hủy
+        }
+      } else {
+        setAddress("Không có thông tin địa chỉ");
+      }
+    };
+
+    fetchAddress();
+
+    return () => {
+      isCancelled = true; // Hủy tác vụ khi component unmount hoặc dependencies thay đổi
+    };
+  }, [isShipping, detailAddressShipping]);
   // Map status (since status is not provided, default to a placeholder)
   const status = billData.isSuccess ? "DA_GIAO" : "CHO_XAC_NHAN";
 
@@ -77,15 +100,15 @@ const Bill = ({ billData }) => {
       <View style={styles.billHeader}>
         <View style={styles.headerRow}>
           <Text style={styles.title}>Hóa đơn: {billCode || itemName}</Text>
-          <View style={styles.statusBadge}>
-            <Text style={styles.statusText}>{translateStatus(status)}</Text>
-          </View>
+          {/* <View style={styles.statusBadge}> */}
+          {/* <Text style={styles.statusText}>{translateStatus(status)}</Text> */}
+          {/* </View> */}
         </View>
       </View>
 
       {/* Customer Info */}
       <View style={styles.section}>
-        <View style={styles.customerInfo}>
+        <View style={{ display: "flex", flexDirection: "row" }}>
           <View style={styles.infoBlock}>
             <Text style={styles.sectionTitle}>Thông tin khách hàng</Text>
             <Text style={styles.infoText}>
@@ -131,7 +154,9 @@ const Bill = ({ billData }) => {
             <View style={[styles.tableCell, styles.productCell]}>
               <View style={styles.productInfo}>
                 <Image
-                  source={{ uri: item.image[0].url || "https://via.placeholder.com/40" }}
+                  source={{
+                    uri: item.image[0].url || "https://via.placeholder.com/40",
+                  }}
                   style={styles.productImage}
                   resizeMode="cover"
                 />
@@ -143,11 +168,33 @@ const Bill = ({ billData }) => {
             <Text style={[styles.tableCell, styles.qtyCell]}>
               {item.quantityInCart || 1}
             </Text>
-            <Text style={[styles.tableCell, styles.priceCell]}>
-              {formatCurrency(item.price)}
-            </Text>
+            <View style={[styles.tableCell, styles.priceCell]}>
+              {item.promotionResponse?.discountValue ? (
+                <View style={{ display: "flex", flexDirection: "column" }}>
+                  <Text style={{ textDecorationLine: "line-through" }}>
+                    {formatCurrency(item.price)}
+                  </Text>
+                  <Text>Giảm: {item.promotionResponse?.discountValue}%</Text>
+                  {/* Tính giá sau khi giảm */}
+                  <Text style={{ color: "#F37021" }}>
+                    {formatCurrency(
+                      item.price -
+                        (item.price * item.promotionResponse?.discountValue) /
+                          100
+                    )}
+                  </Text>
+                </View>
+              ) : (
+                <Text>{formatCurrency(item.price)}</Text>
+              )}
+            </View>
             <Text style={[styles.tableCell, styles.totalCell]}>
-              {formatCurrency((item.price || 0) * (item.quantityInCart || 1))}
+              {formatCurrency(
+                (item.promotionResponse?.discountValue
+                  ? item.price -
+                    (item.price * item.promotionResponse?.discountValue) / 100
+                  : item.price) * (item.quantityInCart || 1)
+              )}
             </Text>
           </View>
         ))}
@@ -156,31 +203,42 @@ const Bill = ({ billData }) => {
       {/* Bill Summary */}
       <View style={styles.customerInfo}>
         <View>
-          <Image
+          {/* <Image
             source={{
-              uri:
-                "https://th.bing.com/th/id/OIP.75m8FRaW9DRQtRHMAaXS8gHaIL?rs=1&pid=ImgDetMain",
+              uri: "https://th.bing.com/th/id/OIP.75m8FRaW9DRQtRHMAaXS8gHaIL?rs=1&pid=ImgDetMain",
             }}
             style={styles.placeholderImage}
+          /> */}
+          <Text>Quét mã để thanh toán</Text>
+          {/*  */}{" "}
+          <GenQRPayMent
+            // amount={moneyAfter}
+            amount={payInfo?.amount}
+            currentBill={key}
+            // transactionCode={payInfo?.transactionCode}
           />
         </View>
         <View style={styles.summarySection}>
-        <View style={styles.summaryRow}>
+          <View style={styles.summaryRow}>
             <Text>Tổng tiền hàng:</Text>
-            <Text style={styles.bold}>{formatCurrency(totalMoney+payInfo?.discount)}</Text>
+            <Text style={styles.bold}>
+              {formatCurrency(totalMoney + payInfo?.discount)}
+            </Text>
           </View>
-        {voucher && (
+          {voucher && (
             <View style={styles.summaryRow}>
               <Text>Voucher:</Text>
-              <Text style={styles.bold}>{formatCurrency(payInfo?.discount)}</Text>
+              <Text style={styles.bold}>
+                {formatCurrency(payInfo?.discount)}
+              </Text>
             </View>
           )}
-       
+
           <View style={styles.summaryRow}>
             <Text>Phí vận chuyển:</Text>
             <Text style={styles.bold}>{formatCurrency(shippingFee)}</Text>
           </View>
-         
+
           <View style={[styles.summaryRow, styles.totalRow]}>
             <Text style={styles.bold}>Tổng thanh toán:</Text>
             <Text style={styles.totalAmount}>{formatCurrency(moneyAfter)}</Text>
@@ -228,12 +286,16 @@ const styles = StyleSheet.create({
   },
   customerInfo: {
     marginBottom: 8,
-    display: "flex",
+    // display: "flex",
     flexDirection: "row",
     justifyContent: "space-between",
+    // display: "grid",
+    // gridTemplateColumns: "1fr 1fr",
+    gap: 20,
   },
   infoBlock: {
     marginBottom: 12,
+    flex: 1,
   },
   sectionTitle: {
     fontSize: 18,

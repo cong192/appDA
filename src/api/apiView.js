@@ -1,6 +1,15 @@
 import axios from "axios";
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import Constants from 'expo-constants';
+import * as Network from 'expo-network';
 
+const getDeviceIP = async () => {
+  const ip = await Network.getIpAddressAsync();
+  console.log("📡 IP LAN:", ip);
+  return ip;
+};
+getDeviceIP();
+const { GHN_API_KEY, GEMINI_URL,LAN_NETWORK  } = Constants.expoConfig.extra;
 // Hàm để lưu token
 const storeToken = async (token) => {
   try {
@@ -19,10 +28,12 @@ const getToken = async () => {
     console.error('Lỗi khi lấy token:', error);
   }
 };
+console.log(`http://${LAN_NETWORK}:8080/api/client`);
+console.log("LAN_NETWORK", LAN_NETWORK);
 
 const token = getToken();
 const api = axios.create({
-  baseURL: "http://192.168.40.108:8080/api/client",
+  baseURL: `http://${LAN_NETWORK}:8080/api/client`,
   headers: {
     Authorization: `Bearer ${token}`,
   },

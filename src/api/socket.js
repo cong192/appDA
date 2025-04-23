@@ -1,6 +1,7 @@
 import { useRef, useCallback } from "react";
 import { Client } from "@stomp/stompjs";
-
+import Constants from 'expo-constants';
+const { GHN_API_KEY, GEMINI_URL,LAN_NETWORK  } = Constants.expoConfig.extra;
 export const useWebSocket = (sub, onMessageReceived) => {
   const stompClient = useRef(null);
   const reconnectAttempts = useRef(0);
@@ -18,7 +19,8 @@ export const useWebSocket = (sub, onMessageReceived) => {
     }
 
     stompClient.current = new Client({
-      brokerURL: "ws://192.168.40.108:8080/ws", // 👈 dùng brokerURL thay vì webSocketFactory
+      // brokerURL: "ws://192.168.40.108:8080/ws", 
+      brokerURL: `ws://${LAN_NETWORK}:8080/ws`,
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,

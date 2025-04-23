@@ -3,12 +3,15 @@ import { StyleSheet, Text, View } from "react-native";
 import { SafeAreaProvider, SafeAreaView } from "react-native-safe-area-context";
 import { useEffect, useState } from "react";
 import ViewPoduct from "./src/components/View";
-
+// import { NotifierWrapper } from "react-native-notifier";
+import Constants from 'expo-constants';
 export default function App() {
+  const { LAN_NETWORK } = Constants.expoConfig?.extra || {};
+  console.log("LAN_NETWORK", LAN_NETWORK);
   const [messages, setMessages] = useState([]);
 
   useEffect(() => {
-    const ws = new WebSocket("ws://192.168.40.108:8080/raw-ws"); 
+    const ws = new WebSocket(`ws://${LAN_NETWORK}:8080/raw-ws`);
 
     ws.onopen = () => {
       console.log("✅ WebSocket Connected");
@@ -41,14 +44,17 @@ export default function App() {
 
   return (
     <SafeAreaProvider>
-      <SafeAreaView style={{ flex: 1, backgroundColor: "#f3702110" }}>
-        <View style={styles.container}>
-          {/* <View>
+      {/* <NotifierWrapper> */}
+        <SafeAreaView style={{ flex: 1, backgroundColor: "#f3702110" }}>
+          {/* các component chính */}
+          <View style={styles.container}>
+            {/* <View>
             <Text>{JSON.stringify(messages, null, 2)}</Text>
           </View> */}
-          <ViewPoduct data={messages} />
-        </View>
-      </SafeAreaView>
+            <ViewPoduct data={messages} />
+          </View>
+        </SafeAreaView>
+      {/* </NotifierWrapper> */}
     </SafeAreaProvider>
   );
 }
