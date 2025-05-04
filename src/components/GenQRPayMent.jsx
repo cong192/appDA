@@ -4,7 +4,7 @@ import axios from 'axios';
 import Constants from 'expo-constants';
 import { Notifier, NotifierComponents } from 'react-native-notifier';
 
-const { SE_PAY_API_KEY } = Constants.expoConfig.extra;
+const { SE_PAY_API_KEY ,LAN_NETWORK} = Constants.expoConfig.extra;
 
 const GenQRPayMent = ({ amount, currentBill, transactionCode, handleBankCustomerMoneyChange }) => {
   const tokenSePay = SE_PAY_API_KEY;
@@ -45,7 +45,7 @@ const GenQRPayMent = ({ amount, currentBill, transactionCode, handleBankCustomer
       tomorrow.setDate(today.getDate() + 1);
       const formatDate = (date) => date.toISOString().split('T')[0];
 
-      const response = await axios.get('http://192.168.40.108:8080/userapi/transactions/list', {
+      const response = await axios.get(`http://${LAN_NETWORK}:8080/userapi/transactions/list`, {
         params: {
           transaction_date_min: formatDate(today),
           transaction_date_max: formatDate(tomorrow),
