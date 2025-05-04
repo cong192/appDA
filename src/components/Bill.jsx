@@ -210,12 +210,20 @@ const Bill = ({ billData }) => {
           <Text>Quét mã để thanh toán</Text>
           <GenQRPayMent
             // amount={moneyAfter}
-            amount={payInfo?.amount}
+            amount={0-payInfo?.change}
             currentBill={key}
             // transactionCode={payInfo?.transactionCode}
           />
           <View>
-          <Text>{status}</Text>
+          <Text style={{
+            fontSize: 16,
+            fontWeight: "bold",
+            color:`${payInfo?.transactionCode?"green":" red"}` ,
+            
+
+
+
+          }}>{payInfo?.transactionCode?"Thanh toán thành công":"Chưa thanh toán"}</Text>
         </View>
         </View>
         
