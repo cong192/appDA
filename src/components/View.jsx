@@ -1,14 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { View, StyleSheet, Text, Button, Modal, ScrollView } from "react-native";
 import ProductProd from "./ProductProd";
-import { getAllProducthadSoldDesc } from "../api/apiView";
+import { getAllProducthadPromotion, getAllProducthadSoldDesc } from "../api/apiView";
 import Bill from "./Bill";
 
 const ViewProduct = ({data}) => {
   const [products, setProducts] = useState([]);
   const [pagination, setPagination] = useState({
     current: 1,
-    pageSize: 10,
+    pageSize:5,
+  });
+  const [productHadPromotions, setProductHadPromotions] = useState([]);
+  const [paginationPromotion, setPaginationPromotion] = useState({
+    current: 1,
+    pageSize: 5,
   });
   const [showBill, setShowBill] = useState(false);
   const [billData, setBillData] = useState(null);
@@ -16,7 +21,10 @@ const ViewProduct = ({data}) => {
   useEffect(() => {
     const fetchData = async () => {
       const data = await getAllProducthadSoldDesc(pagination);
+      const data1 = await getAllProducthadPromotion(paginationPromotion);
+
       setProducts(data.data);
+      setProductHadPromotions(data1.data);
       // console.log(data);
     };
     fetchData();
@@ -35,7 +43,9 @@ useEffect(() => {
    <ScrollView >
      <View style={{ flex: 1 }}>
       <View style={styles.welcome}>
-        <Text style={{color: "#f37021",fontSize: 20,fontWeight: "bold"}}>Chào mừng bạn đến với TheHands</Text>
+        <Text style={{color: "#f37021",fontSize: 20,fontWeight: "bold"}}>CHÀO MỪNG BẠN ĐẾN VỚI THEHANDS</Text>
+        <Text style={{color: "#f37021",fontSize: 20,fontWeight: "normal"}}> Chào mừng Ngày Giải phóng miền Nam 30/4 và Quốc tế Lao động 1/5!</Text>
+
         {/* <Button
           title="show hóa đơn"
           onPress={() => {
@@ -63,8 +73,21 @@ useEffect(() => {
 
       {/* Danh sách sản phẩm */}
       <ScrollView style={{backgroundColor: "#f3702110"}}>
+      <View style={{ justifyContent:"flex-start",alignItems:"flex-start",marginLeft: 20,marginTop: 20, padding: 10,backgroundColor: "#f3702110"}}>  
+        <Text style={{color: "#f37021",fontSize: 20,fontWeight: "bold"}}>SẢN PHẢM BÁN CHẠY</Text>
+      </View>
       <View style={styles.container}>
         {products.map((item) => (
+          <View key={item.productDetailId} style={styles.productContainer}>
+            <ProductProd product={item} />
+          </View>
+        ))}
+      </View>
+      <View style={{ justifyContent:"flex-start",alignItems:"flex-start",marginLeft: 20,marginTop: 20, padding: 10,backgroundColor: "#f3702110"}}>  
+        <Text style={{color: "#f37021",fontSize: 20,fontWeight: "bold"}}>SẢN PHẨM ĐANG GIẢM GIÁ</Text>
+      </View>
+      <View style={styles.container}>
+        {productHadPromotions.map((item) => (
           <View key={item.productDetailId} style={styles.productContainer}>
             <ProductProd product={item} />
           </View>
@@ -103,7 +126,7 @@ const styles = StyleSheet.create({
   },
   welcome: {
     marginTop: 20,
-    marginBottom: 20,
+    // marginBottom: 20,
     padding: 10,
     backgroundColor: "#f3702110",
   justifyContent: "center",

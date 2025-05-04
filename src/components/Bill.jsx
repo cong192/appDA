@@ -50,6 +50,7 @@ const Bill = ({ billData }) => {
     vouchers,
     itemName,
     isShipping,
+    isSuccess
   } = billData;
 
   // Format address with null checks
@@ -81,7 +82,7 @@ const Bill = ({ billData }) => {
     };
   }, [isShipping, detailAddressShipping]);
   // Map status (since status is not provided, default to a placeholder)
-  const status = billData.isSuccess ? "DA_GIAO" : "CHO_XAC_NHAN";
+  const status = billData.isSuccess ? "Đã thanh toán" : "Chưa thanh toán";
 
   // Map payment method
   const payment = payInfo?.paymentMethods || "Không xác định";
@@ -99,7 +100,7 @@ const Bill = ({ billData }) => {
       {/* Bill Header */}
       <View style={styles.billHeader}>
         <View style={styles.headerRow}>
-          <Text style={styles.title}>Hóa đơn: {billCode || itemName}</Text>
+          <Text style={styles.title}>{billCode || itemName}</Text>
           {/* <View style={styles.statusBadge}> */}
           {/* <Text style={styles.statusText}>{translateStatus(status)}</Text> */}
           {/* </View> */}
@@ -113,11 +114,11 @@ const Bill = ({ billData }) => {
             <Text style={styles.sectionTitle}>Thông tin khách hàng</Text>
             <Text style={styles.infoText}>
               <Text style={styles.bold}>Tên:</Text>{" "}
-              {recipientName || "Không xác định"}
+              <Text>{recipientName || "Không xác định"}</Text>
             </Text>
             <Text style={styles.infoText}>
               <Text style={styles.bold}>Số điện thoại:</Text>{" "}
-              {recipientPhoneNumber || "Không xác định"}
+              <Text> {recipientPhoneNumber || "Không xác định"}</Text>
             </Text>
             <Text style={styles.infoText}>
               <Text style={styles.bold}>Email:</Text> Không xác định
@@ -147,59 +148,56 @@ const Bill = ({ billData }) => {
           <Text style={[styles.tableHeader, styles.priceCell]}>Đơn giá</Text>
           <Text style={[styles.tableHeader, styles.totalCell]}>Thành tiền</Text>
         </View>
-
-        {/* Table Content */}
-        {productList?.map((item, index) => (
-          <View key={index} style={styles.tableRow}>
-            <View style={[styles.tableCell, styles.productCell]}>
-              <View style={styles.productInfo}>
-                <Image
-                  source={{
-                    uri: item.image[0].url || "https://via.placeholder.com/40",
-                  }}
-                  style={styles.productImage}
-                  resizeMode="cover"
-                />
-                <Text style={styles.productText}>
-                  {item.productName} ({item.brandName})
+      </View>
+      {/* Table Content */}
+      {productList?.map((item, index) => (
+        <View key={index} style={styles.tableRow}>
+          <View style={[styles.tableCell, styles.productCell]}>
+            <View style={styles.productInfo}>
+              <Image
+                source={{
+                  uri: item.image[0]?.url || "https://via.placeholder.com/40",
+                }}
+                style={styles.productImage}
+                resizeMode="cover"
+              />
+              <Text style={styles.productText}>
+                {item.productName} ({item.brandName})
+              </Text>
+            </View>
+          </View>
+          <Text style={[styles.tableCell, styles.qtyCell]}>
+            {item.quantityInCart || 1}
+          </Text>
+          <View style={[styles.tableCell, styles.priceCell]}>
+            {item.promotionResponse?.discountValue ? (
+              <View style={{ display: "flex", flexDirection: "column" }}>
+                <Text style={{ textDecorationLine: "line-through" }}>
+                  {formatCurrency(item.price)}
+                </Text>
+                <Text>Giảm: {item.promotionResponse?.discountValue}%</Text>
+                {/* Tính giá sau khi giảm */}
+                <Text style={{ color: "#F37021" }}>
+                  {formatCurrency(
+                    item.price -
+                      (item.price * item.promotionResponse?.discountValue) / 100
+                  )}
                 </Text>
               </View>
-            </View>
-            <Text style={[styles.tableCell, styles.qtyCell]}>
-              {item.quantityInCart || 1}
-            </Text>
-            <View style={[styles.tableCell, styles.priceCell]}>
-              {item.promotionResponse?.discountValue ? (
-                <View style={{ display: "flex", flexDirection: "column" }}>
-                  <Text style={{ textDecorationLine: "line-through" }}>
-                    {formatCurrency(item.price)}
-                  </Text>
-                  <Text>Giảm: {item.promotionResponse?.discountValue}%</Text>
-                  {/* Tính giá sau khi giảm */}
-                  <Text style={{ color: "#F37021" }}>
-                    {formatCurrency(
-                      item.price -
-                        (item.price * item.promotionResponse?.discountValue) /
-                          100
-                    )}
-                  </Text>
-                </View>
-              ) : (
-                <Text>{formatCurrency(item.price)}</Text>
-              )}
-            </View>
-            <Text style={[styles.tableCell, styles.totalCell]}>
-              {formatCurrency(
-                (item.promotionResponse?.discountValue
-                  ? item.price -
-                    (item.price * item.promotionResponse?.discountValue) / 100
-                  : item.price) * (item.quantityInCart || 1)
-              )}
-            </Text>
+            ) : (
+              <Text>{formatCurrency(item.price)}</Text>
+            )}
           </View>
-        ))}
-      </View>
-
+          <Text style={[styles.tableCell, styles.totalCell]}>
+            {formatCurrency(
+              (item.promotionResponse?.discountValue
+                ? item.price -
+                  (item.price * item.promotionResponse?.discountValue) / 100
+                : item.price) * (item.quantityInCart || 1)
+            )}
+          </Text>
+        </View>
+      ))}
       {/* Bill Summary */}
       <View style={styles.customerInfo}>
         <View>
@@ -210,14 +208,17 @@ const Bill = ({ billData }) => {
             style={styles.placeholderImage}
           /> */}
           <Text>Quét mã để thanh toán</Text>
-          {/*  */}{" "}
           <GenQRPayMent
             // amount={moneyAfter}
             amount={payInfo?.amount}
             currentBill={key}
             // transactionCode={payInfo?.transactionCode}
           />
+          <View>
+          <Text>{status}</Text>
         </View>
+        </View>
+        
         <View style={styles.summarySection}>
           <View style={styles.summaryRow}>
             <Text>Tổng tiền hàng:</Text>
